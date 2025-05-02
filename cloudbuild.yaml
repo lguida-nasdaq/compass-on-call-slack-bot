@@ -1,0 +1,7 @@
+steps:
+  - name: gcr.io/kaniko-project/executor:v1.8.1
+    id: build-fougere-image
+    args:
+      - --dockerfile=Dockerfile
+      - --destination=us-docker.pkg.dev/${PROJECT_ID}/metrio/compass-slack:latest
+      - --cache=true
