@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -22,6 +24,11 @@ func setupTest() (http.Handler, *http.Request) {
 	handler := VerifySlackSignature(mockSigningSecret, testHandler)
 	req := utils.CreateValidSlackRequest(mockSigningSecret, "test-body")
 	return handler, req
+}
+
+func TestMain(m *testing.M) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	m.Run()
 }
 
 func TestVerifySlackSignature_ValidRequest(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
@@ -65,6 +66,11 @@ func givenJiraClient() *api.JiraClient {
 	}
 
 	return api.NewJiraClient(mockUser, mockAPIKey, api.WithJiraHttpClient(mockJiraClient))
+}
+
+func TestMain(m *testing.M) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	m.Run()
 }
 
 func TestServerEndpoint(t *testing.T) {
