@@ -19,6 +19,20 @@ func TestCompassClient(t *testing.T) {
 	// Create a mock HTTP client
 	mockClient := &http.Client{
 		Transport: utils.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			if !strings.Contains(req.URL.Path, mockCloudId) {
+				t.Errorf("expected request to contain cloud ID '%s', got '%s'", mockCloudId, req.URL.Path)
+			}
+			user, key, ok := req.BasicAuth()
+			if !ok {
+				t.Errorf("Missing basic auth credentials")
+			}
+			if user != mockUser {
+				t.Errorf("Expected user '%s', got '%s'", mockUser, user)
+			}
+			if key != mockApiKey {
+				t.Errorf("Expected API key '%s', got '%s'", mockApiKey, key)
+			}
+
 			return &http.Response{
 				StatusCode: http.StatusOK,
 				Body:       io.NopCloser(strings.NewReader(`{"values": [{"id": "schedule-1", "name": "Test Schedule"}]}`)),

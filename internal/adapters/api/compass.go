@@ -32,7 +32,10 @@ type CompassClient struct {
 
 func NewCompassClient(user, apiKey, cloudId string, opts ...ClientOption) *CompassClient {
 	client := &CompassClient{
-		client: &http.Client{},
+		user:    user,
+		apiKey:  apiKey,
+		cloudId: cloudId,
+		client:  &http.Client{},
 	}
 
 	for _, opt := range opts {
