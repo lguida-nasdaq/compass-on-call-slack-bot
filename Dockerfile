@@ -20,4 +20,4 @@ FROM gcr.io/distroless/static:nonroot AS runner
 
 COPY --from=builder /server /server
 
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/server", "run"]
