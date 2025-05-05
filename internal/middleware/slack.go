@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/metriodev/pompiers/internal/config"
 	"github.com/slack-go/slack"
 )
 
@@ -15,9 +14,9 @@ var (
 	maxTimeElapsed = 5 * time.Minute
 )
 
-func VerifySlackSignature(cfg config.Config, next http.Handler) http.Handler {
+func VerifySlackSignature(signingSecret string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if cfg.SigningSecret == "" {
+		if signingSecret == "" {
 			http.Error(w, "Slack signing secret not configured", http.StatusInternalServerError)
 			return
 		}
@@ -29,7 +28,7 @@ func VerifySlackSignature(cfg config.Config, next http.Handler) http.Handler {
 			return
 		}
 
-		sv, err := slack.NewSecretsVerifier(r.Header, cfg.SigningSecret)
+		sv, err := slack.NewSecretsVerifier(r.Header, signingSecret)
 		if err != nil {
 			slog.Error("Error creating secret verifier", "body", string(body), "headers", r.Header, "error", err)
 			w.WriteHeader(http.StatusUnauthorized)

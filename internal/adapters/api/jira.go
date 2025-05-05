@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-
-	"github.com/metriodev/pompiers/internal/config"
 )
 
 const (
@@ -26,18 +24,19 @@ func WithJiraHttpClient(client *http.Client) JiraClientOption {
 }
 
 type JiraClient struct {
-	config config.Config
+	user   string
+	apiKey string
 	client *http.Client
 }
 
 // Replace current constructor with this one
-func NewJiraClient(cfg config.Config, opts ...JiraClientOption) *JiraClient {
+func NewJiraClient(user, apiKey string, opts ...JiraClientOption) *JiraClient {
 	client := &JiraClient{
-		config: cfg,
+		user:   user,
+		apiKey: apiKey,
 		client: &http.Client{},
 	}
 
-	// Apply the functional options
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -82,7 +81,7 @@ func (c *JiraClient) doRequest(req jiraApiRequest) (*http.Response, error) {
 	}
 
 	httpReq.URL.RawQuery = req.Query.Encode()
-	httpReq.SetBasicAuth(c.config.User, c.config.APIKey)
+	httpReq.SetBasicAuth(c.user, c.apiKey)
 	httpReq.Header.Set("Accept", "application/json")
 	httpReq.Header.Set("Content-Type", "application/json")
 

@@ -1,48 +1,31 @@
 package middleware
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/metriodev/pompiers/internal/config"
+	"github.com/metriodev/pompiers/internal/pkg/utils"
 )
 
-func validRequest(cfg config.Config, body string) (*http.Request, string) {
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	baseString := "v0:" + timestamp + ":" + body
+const (
+	mockSigningSecret = "mock-secret"
+)
 
-	mac := hmac.New(sha256.New, []byte(cfg.SigningSecret))
-	mac.Write([]byte(baseString))
-	signature := "v0=" + hex.EncodeToString(mac.Sum(nil))
-
-	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
-	req.Header.Set("X-Slack-Request-Timestamp", timestamp)
-	req.Header.Set("X-Slack-Signature", signature)
-
-	return req, timestamp
-}
-
-func TestVerifySlackSignature_ValidRequest(t *testing.T) {
-	cfg := config.Config{
-		SigningSecret: "test-secret",
-	}
-
+func setupTest() (http.Handler, *http.Request) {
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
+	handler := VerifySlackSignature(mockSigningSecret, testHandler)
+	req := utils.CreateValidSlackRequest(mockSigningSecret, "test-body")
+	return handler, req
+}
 
-	handler := VerifySlackSignature(cfg, testHandler)
-
-	body := "test-body"
-	req, _ := validRequest(cfg, body)
+func TestVerifySlackSignature_ValidRequest(t *testing.T) {
+	handler, req := setupTest()
 
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -53,19 +36,7 @@ func TestVerifySlackSignature_ValidRequest(t *testing.T) {
 }
 
 func TestVerifySlackSignature_InvalidSignature(t *testing.T) {
-	cfg := config.Config{
-		SigningSecret: "test-secret",
-	}
-
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	handler := VerifySlackSignature(cfg, testHandler)
-
-	body := "test-body"
-	req, _ := validRequest(cfg, body)
+	handler, req := setupTest()
 
 	// Set an invalid signature
 	req.Header.Set("X-Slack-Signature", "invalid-signature")
@@ -79,19 +50,7 @@ func TestVerifySlackSignature_InvalidSignature(t *testing.T) {
 }
 
 func TestVerifySlackSignature_ExpiredTimestamp(t *testing.T) {
-	cfg := config.Config{
-		SigningSecret: "test-secret",
-	}
-
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-
-	handler := VerifySlackSignature(cfg, testHandler)
-
-	body := "test-body"
-	req, _ := validRequest(cfg, body)
+	handler, req := setupTest()
 
 	// Set an expired timestamp
 	expiredTimestamp := strconv.FormatInt(time.Now().Add(-10*time.Minute).Unix(), 10)

@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-
-	"github.com/metriodev/pompiers/internal/config"
 )
 
 const (
@@ -26,17 +24,17 @@ func WithHttpClient(client *http.Client) ClientOption {
 }
 
 type CompassClient struct {
-	config config.Config
-	client *http.Client
+	user    string
+	apiKey  string
+	cloudId string
+	client  *http.Client
 }
 
-func NewCompassClient(cfg config.Config, opts ...ClientOption) *CompassClient {
+func NewCompassClient(user, apiKey, cloudId string, opts ...ClientOption) *CompassClient {
 	client := &CompassClient{
-		config: cfg,
 		client: &http.Client{},
 	}
 
-	// Apply the functional options
 	for _, opt := range opts {
 		opt(client)
 	}
@@ -55,7 +53,7 @@ type scheduleAPIResponse struct {
 }
 
 func (c *CompassClient) doRequest(req compassApiRequest) (*http.Response, error) {
-	endpoint, err := url.JoinPath(baseUrl, c.config.CloudID, "/ops/v1")
+	endpoint, err := url.JoinPath(baseUrl, c.cloudId, "/ops/v1")
 	if err != nil {
 		return nil, fmt.Errorf("error joining base URL: %w", err)
 	}
@@ -70,11 +68,10 @@ func (c *CompassClient) doRequest(req compassApiRequest) (*http.Response, error)
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
 
-	httpReq.SetBasicAuth(c.config.User, c.config.APIKey)
+	httpReq.SetBasicAuth(c.user, c.apiKey)
 	httpReq.Header.Set("Accept", "application/json")
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	log.Printf("Requesting URL: %s", httpReq.URL.String())
 	res, err := c.client.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)

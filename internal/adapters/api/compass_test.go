@@ -6,18 +6,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/metriodev/pompiers/internal/config"
 	"github.com/metriodev/pompiers/internal/pkg/utils"
 )
 
-func TestCompassClient(t *testing.T) {
-	// Setup test config
-	cfg := config.Config{
-		CloudID: "mock-cloud-id",
-		User:    "mock-user",
-		APIKey:  "mock-api-key",
-	}
+const (
+	mockCloudId = "mock-cloud-id"
+	mockUser    = "mock-user"
+	mockApiKey  = "mock-api-key"
+)
 
+func TestCompassClient(t *testing.T) {
 	// Create a mock HTTP client
 	mockClient := &http.Client{
 		Transport: utils.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
@@ -28,10 +26,8 @@ func TestCompassClient(t *testing.T) {
 		}),
 	}
 
-	// Create client with the functional option
-	client := NewCompassClient(cfg, WithHttpClient(mockClient))
+	client := NewCompassClient(mockUser, mockApiKey, mockCloudId, WithHttpClient(mockClient))
 
-	// Proceed with your tests...
 	schedules, err := client.GetSchedules()
 
 	if err != nil {
@@ -47,5 +43,3 @@ func TestCompassClient(t *testing.T) {
 		t.Errorf("expected schedule name 'Test Schedule', got '%s'", schedules[0].Name)
 	}
 }
-
-// Additional test functions...

@@ -7,22 +7,19 @@ import (
 	"sync"
 
 	"github.com/metriodev/pompiers/internal/adapters/api"
-	"github.com/metriodev/pompiers/internal/config"
 	"github.com/metriodev/pompiers/internal/domain"
 	"golang.org/x/sync/errgroup"
 )
 
 type App struct {
-	Config        config.Config
 	CompassClient *api.CompassClient
 	JiraClient    *api.JiraClient
 }
 
-func NewApp(cfg config.Config, cc api.CompassClient, jc api.JiraClient) *App {
+func NewApp(cc *api.CompassClient, jc *api.JiraClient) *App {
 	return &App{
-		Config:        cfg,
-		CompassClient: &cc,
-		JiraClient:    &jc,
+		CompassClient: cc,
+		JiraClient:    jc,
 	}
 }
 
